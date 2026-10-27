@@ -1,0 +1,36 @@
+{
+  "name": "cse341-books",
+  "version": "1.0.0",
+  "description": "Books API for CSE",
+  "keywords": [
+    "Application",
+    "Programming",
+    "Interface"
+  ],
+  "homepage": "https://github.com/LuthandoNgombane/cse341-books#readme",
+  "bugs": {
+    "url": "https://github.com/LuthandoNgombane/cse341-books/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LuthandoNgombane/cse341-books.git"
+  },
+  "license": "ISC",
+  "author": "Luythando Ngombane",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node --env-file=.env server.js",
+    "dev": "nodemon --env-file=.env server.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix ."
+  },
+  "dependencies": {
+    "express": "^5.3.0"
+  },
+  "devDependencies": {
+    "eslint": "^10.13.0",
+    "nodemon": "^3.1.14"
+  }
+}
