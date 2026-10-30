@@ -1,5 +1,5 @@
 import app from './app.js';
-// import { connectToDb, getDb } from './src/db/connect.js';
+import { connectToDb, getDb } from './src/db/connect.js';
 
 const PORT = process.env.PORT;
 
