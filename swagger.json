@@ -15,20 +15,413 @@
     "/authors": {
       "get": {
         "summary": "Get all authors",
+        "description": "Returns authors sorted lexicographically by custom id.",
         "tags": [
           "Authors"
         ],
         "responses": {
           "200": {
-            "description": "A list of authors"
+            "description": "An array of authors, or an empty array.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Author"
+                  }
+                },
+                "examples": {
+                  "authors": {
+                    "value": [
+                      {
+                        "id": "a1",
+                        "name": "Jane Austen",
+                        "birthYear": 1775
+                      }
+                    ]
+                  },
+                  "empty": {
+                    "value": []
+                  }
+                }
+              }
+            }
           },
           "500": {
-            "description": "Unable to retrieve authors"
+            "$ref": "#/components/responses/AuthorServerError"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create an author",
+        "description": "Requires a unique custom id and all author fields. JSON body limit is 10 KiB.",
+        "tags": [
+          "Authors"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Author"
+              },
+              "example": {
+                "id": "a4",
+                "name": "Example Author",
+                "birthYear": 1980
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The newly created author.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Author"
+                },
+                "example": {
+                  "id": "a4",
+                  "name": "Example Author",
+                  "birthYear": 1980
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AuthorBadRequest"
+          },
+          "413": {
+            "$ref": "#/components/responses/AuthorPayloadTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/AuthorUnsupportedMediaType"
+          },
+          "500": {
+            "$ref": "#/components/responses/AuthorServerError"
+          }
+        }
+      }
+    },
+    "/authors/{id}": {
+      "get": {
+        "summary": "Get one author",
+        "tags": [
+          "Authors"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AuthorId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The matching author.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Author"
+                },
+                "example": {
+                  "id": "a1",
+                  "name": "Jane Austen",
+                  "birthYear": 1775
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AuthorBadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/AuthorNotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/AuthorServerError"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update an author",
+        "description": "Both editable fields are required. The id cannot change. An unchanged valid update returns 200. JSON body limit is 10 KiB.",
+        "tags": [
+          "Authors"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AuthorId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorUpdate"
+              },
+              "example": {
+                "name": "Updated Author Name",
+                "birthYear": 1981
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated author, preserving the route id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Author"
+                },
+                "example": {
+                  "id": "a1",
+                  "name": "Updated Author Name",
+                  "birthYear": 1981
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/AuthorBadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/AuthorNotFound"
+          },
+          "413": {
+            "$ref": "#/components/responses/AuthorPayloadTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/AuthorUnsupportedMediaType"
+          },
+          "500": {
+            "$ref": "#/components/responses/AuthorServerError"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete an author",
+        "description": "Authors with books cannot be deleted. Reassign or delete their books first. A blocked deletion changes neither collection.",
+        "tags": [
+          "Authors"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AuthorId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Author deleted. No response body."
+          },
+          "400": {
+            "$ref": "#/components/responses/AuthorBadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/AuthorNotFound"
+          },
+          "409": {
+            "description": "At least one book references this author.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorApiError"
+                },
+                "example": {
+                  "error": "Cannot delete an author who has books."
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/AuthorServerError"
           }
         }
       }
     }
   },
-  "components": {},
+  "components": {
+    "schemas": {
+      "Author": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "birthYear"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^a[1-9][0-9]{0,8}$",
+            "example": "a1"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150,
+            "description": "Author name, trimmed before storage.",
+            "example": "Jane Austen"
+          },
+          "birthYear": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Must not exceed the current UTC calendar year.",
+            "example": 1775
+          }
+        }
+      },
+      "AuthorUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "birthYear"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150,
+            "description": "Author name, trimmed before storage.",
+            "example": "Updated Author Name"
+          },
+          "birthYear": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Must not exceed the current UTC calendar year.",
+            "example": 1981
+          }
+        }
+      },
+      "AuthorApiError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "parameters": {
+      "AuthorId": {
+        "in": "path",
+        "name": "id",
+        "required": true,
+        "description": "Custom author id, not a MongoDB ObjectId.",
+        "schema": {
+          "type": "string",
+          "pattern": "^a[1-9][0-9]{0,8}$"
+        },
+        "example": "a1"
+      }
+    },
+    "responses": {
+      "AuthorBadRequest": {
+        "description": "Invalid path id, request body, field value, or duplicate id.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AuthorApiError"
+            },
+            "examples": {
+              "invalidPath": {
+                "value": {
+                  "error": "Invalid author id."
+                }
+              },
+              "missingField": {
+                "value": {
+                  "error": "name is required."
+                }
+              },
+              "invalidField": {
+                "value": {
+                  "error": "Invalid birthYear."
+                }
+              },
+              "unexpectedField": {
+                "value": {
+                  "error": "Unexpected field: id."
+                }
+              },
+              "duplicateId": {
+                "value": {
+                  "error": "Author id already exists."
+                }
+              },
+              "invalidJson": {
+                "value": {
+                  "error": "Invalid JSON body."
+                }
+              },
+              "invalidBody": {
+                "value": {
+                  "error": "Request body must be a JSON object."
+                }
+              }
+            }
+          }
+        }
+      },
+      "AuthorNotFound": {
+        "description": "No author exists with the supplied custom id.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AuthorApiError"
+            },
+            "example": {
+              "error": "Author not found."
+            }
+          }
+        }
+      },
+      "AuthorServerError": {
+        "description": "Unexpected server or database error.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AuthorApiError"
+            },
+            "example": {
+              "error": "Internal server error."
+            }
+          }
+        }
+      },
+      "AuthorPayloadTooLarge": {
+        "description": "Request body exceeds 10 KiB.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AuthorApiError"
+            },
+            "example": {
+              "error": "Request body too large."
+            }
+          }
+        }
+      },
+      "AuthorUnsupportedMediaType": {
+        "description": "Missing or unsupported Content-Type.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AuthorApiError"
+            },
+            "example": {
+              "error": "Content-Type must be application/json."
+            }
+          }
+        }
+      }
+    }
+  },
   "tags": []
 }
